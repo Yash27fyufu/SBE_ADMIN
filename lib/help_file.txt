@@ -1,0 +1,35 @@
+
+// to change app icon
+
+flutter pub upgrade --major-versions
+
+flutter pub pub run flutter_launcher_icons:main 
+
+flutter build appBundle --release
+
+ --------     flutter NEW_VERSION_PLUS detects VERSION NUMBER and PLAYSTORE detects BUILD NUMBER changes
+
+
+        ----- in case the version is not matching and causing unnecessary errors:
+
+                    create a backup and then delete android folder and "flutter create ."
+
+        ----- if you try to copy the files to a new project :
+
+                    change the package name to the previous one 
+
+                    copy required files like "googleservice", "firebase" related, and so on into that android 
+
+                    update manifest for permissions and api keys (if any)
+
+                    update build.gradle in "andoid" and "android/app" to import proper dependencies
+
+
+for build appbundle for updated versions :
+
+        keep the keystore from previous build with password and update in key.properties under android folder
+
+        then update all the versions (that is after + symbol is must to update the value)
+
+
+
