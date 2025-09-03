@@ -1,4 +1,4 @@
-package com.latest.sbe.catalogue
+package com.sbe.catalogue
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -10,7 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'globalvar.dart';
 import 'mainpage.dart';
-// import 'package:permission_handler/permission_handler.dart';
+// import 'package:permission_handler/permission_handler';
 
 import 'package:path_provider/path_provider.dart';
 
@@ -25,6 +25,7 @@ class PDFViewpage extends StatefulWidget {
 
 class _PDFViewpageState extends State<PDFViewpage> {
   late String basePath;
+  double _downloadProgress = 0.0; // Added for download progress
 
   @override
   void initState() {
@@ -34,8 +35,6 @@ class _PDFViewpageState extends State<PDFViewpage> {
         pdfurl.toString().lastIndexOf("?alt="));
     asd = pathxy.toString().replaceAll("/", "");
     asd = asd.toString().replaceAll(" ", "");
-
-    isloadin = true;
 
     _initPathAndDownload();
   }
@@ -52,43 +51,67 @@ class _PDFViewpageState extends State<PDFViewpage> {
     pdfpagetitle = pgtitle.toString();
 
     return WillPopScope(
-        onWillPop: () async {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => Home(
-                      title: pgtitle,
-                    )),
-          );
+      onWillPop: () async {
+        // Prevent back navigation if the file is still loading
+        if (isloadin) {
           return false;
-        },
-        child: Scaffold(
-            appBar: AppBar(
-              title: Text(pdfpagetitle),
-              backgroundColor: Colors.amber,
-              actions: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: IconButton(
-                    iconSize: 20,
-                    icon: const Icon(Icons.share),
-                    onPressed: () {
-                      sharefile(asd);
-                    },
-                  ),
-                ),
-              ],
+        }
+
+        // Allow back navigation and go to the home page if not loading
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Home(
+              title: pgtitle,
             ),
-            body: Container(
-                child: isloadin
-                    ? const Center(child: CircularProgressIndicator())
-                    : PDF().fromPath(
-                        "$basePath/$asd/$filenameinurl.pdf"))));
+          ),
+        );
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(pdfpagetitle),
+          backgroundColor: Colors.amber,
+          actions: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: IconButton(
+                iconSize: 20,
+                icon: const Icon(Icons.share),
+                onPressed: () {
+                  if (!isloadin) {
+                    sharefile(asd);
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        body: Container(
+          child: isloadin
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Downloading: ${(_downloadProgress * 100).toStringAsFixed(0)}%",
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+                )
+              : PDF().fromPath("$basePath/$asd/$filenameinurl.pdf"),
+        ),
+      ),
+    );
   }
 
   Future<void> downloadfile() async {
     setState(() {
       isloadin = true;
+      _downloadProgress = 0.0;
     });
 
     final dir = Directory(basePath);
@@ -101,41 +124,45 @@ class _PDFViewpageState extends State<PDFViewpage> {
       await subDir.create(recursive: true);
       await savethepdfindevice(asd);
     } else {
-      setState(() {
-        isloadin = false;
-      });
-
-      var filesinfolder = "";
-      var filenameindevice = "";
-      if (subDir.listSync(recursive: true, followLinks: false).isNotEmpty) {
-        filesinfolder = subDir.listSync(recursive: true, followLinks: false)[0]
-            .toString();
-        filenameindevice = filesinfolder.substring(
-            filesinfolder.lastIndexOf("/") + 1, filesinfolder.length - 5);
-      }
-
-      if (filenameindevice.toString() == "") {
-        await savethepdfindevice(asd);
-      } else if (filenameindevice != filenameinurl) {
-        deleteFile(File(
-            filesinfolder.toString().substring(7, filesinfolder.length - 1)));
+      final file = File("$basePath/$asd/$filenameinurl.pdf");
+      if (await file.exists()) {
+        setState(() {
+          isloadin = false;
+        });
+      } else {
         await savethepdfindevice(asd);
       }
     }
   }
 
   Future<void> savethepdfindevice(asd) async {
-    var httpClient = HttpClient();
-    var request = await httpClient.getUrl(Uri.parse(pdfurl));
-    var response = await request.close();
-    var bytes = await consolidateHttpClientResponseBytes(response);
+    try {
+      final request = await HttpClient().getUrl(Uri.parse(pdfurl));
+      final response = await request.close();
+      final totalBytes = response.contentLength;
 
-    File file = File("$basePath/$asd/$filenameinurl.pdf");
-    await file.writeAsBytes(bytes);
+      final file = File("$basePath/$asd/$filenameinurl.pdf");
+      final sink = file.openSync(mode: FileMode.write);
+      int bytesReceived = 0;
 
-    setState(() {
-      isloadin = false;
-    });
+      await for (var chunk in response) {
+        sink.writeFromSync(chunk);
+        bytesReceived += chunk.length;
+
+        setState(() {
+          if (totalBytes != -1) {
+            _downloadProgress = bytesReceived / totalBytes;
+          }
+        });
+      }
+      await sink.close();
+    } catch (e) {
+      print("Error saving PDF: $e");
+    } finally {
+      setState(() {
+        isloadin = false;
+      });
+    }
   }
 
   sharefile(asd) async {

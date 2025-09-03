@@ -1,59 +1,55 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.history
-.svn/
-migrate_working_dir/
+# This is a standard .gitignore for Flutter projects.
+# It is designed to ignore files and directories that are generated
+# by the build process, IDEs, and other tools.
 
-# IntelliJ related
+# IDE and Editor-specific Files
+# -----------------------------------------------------------------
+.idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.idea/
 
-# VS Code related
-.vscode/
+# Operating System Files
+# -----------------------------------------------------------------
+.DS_Store
+Thumbs.db
 
-# Flutter/Dart/Pub related
-**/doc/api/
+# Flutter and Dart-specific
+# -----------------------------------------------------------------
+# Build output
+/build/
 .dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
+.fvm/
+/doc/api/
+
+# Pub and dependency management files
+.pub/
 .packages
 .pub-cache/
-.pub/
-/build/
 
-# IDE files
-.idea/
-.vscode/
-# Add .vscode if you don't want to share project settings.
-# Comment it out if you do.
+# Flutter plugin-specific generated files
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Generated files for platform-specific builds
-**/ios/Flutter/.last_build_id
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Platform-specific build artifacts
+# -----------------------------------------------------------------
+# Android
+/android/.gradle/
+/android/local.properties
+/android/key.properties
+/android/.cxx/
 
-# Symbolication related
-app.*.symbols
+# iOS
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/.last_build_id
+/ios/.flutter-symlinks/
 
-# Obfuscation related
-app.*.map.json
-
-# Web build
+# Web
 /web/
 
-# Generated files for desktop platforms
-/linux/flutter/generated_plugin_registrant.cc
-/linux/flutter/generated_plugin_registrant.h
-
-/macos/Flutter/GeneratedPluginRegistrant.swift
-/macos/Flutter/GeneratedPluginRegistrant.h
-
-/windows/flutter/generated_plugin_registrant.cc
-/windows/flutter/generated_plugin_registrant.h
+# Desktop
+/linux/
+/macos/
+/windows/
